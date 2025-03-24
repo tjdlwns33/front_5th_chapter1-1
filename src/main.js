@@ -9,7 +9,7 @@ const MainPage = () => `
         <ul class="flex justify-around">
           <li><a href="/" class="text-blue-600">홈</a></li>
           <li><a href="/profile" class="text-gray-600">프로필</a></li>
-          <li><a href="#" class="text-gray-600">로그아웃</a></li>
+          <li><a href="#" id="logout" class="text-gray-600">로그아웃</a></li>
         </ul>
       </nav>
 
@@ -130,9 +130,9 @@ const LoginPage = () => `
   <main class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
       <h1 class="text-2xl font-bold text-center text-blue-600 mb-8">항해플러스</h1>
-      <form>
+      <form id="login-form">
         <div class="mb-4">
-          <input type="text" placeholder="이메일 또는 전화번호" class="w-full p-2 border rounded">
+          <input type="text" id="login-text" placeholder="사용자 이름" class="w-full p-2 border rounded">
         </div>
         <div class="mb-6">
           <input type="password" placeholder="비밀번호" class="w-full p-2 border rounded">
@@ -233,9 +233,79 @@ const ProfilePage = () => `
   </div>
 `;
 
-document.body.innerHTML = `
-  ${MainPage()}
-  ${ProfilePage()}
-  ${LoginPage()}
-  ${ErrorPage()}
-`;
+// document.body.innerHTML = `
+//   ${MainPage()}
+//   ${ProfilePage()}
+//   ${LoginPage()}
+//   ${ErrorPage()}
+// `;
+
+// 라우트 설정
+function router() {
+  const $body = document.querySelector("body");
+  const { pathname } = location;
+
+  if(pathname === "/") {
+      $body.innerHTML = MainPage();
+      console.log("main")
+  }
+  else if(pathname === "/profile") {
+      $body.innerHTML = ProfilePage();
+      console.log("profile")
+  }
+  else if(pathname === "/login") {
+      $body.innerHTML = LoginPage();
+      console.log("login")
+  }
+  else {
+    $body.innerHTML = ErrorPage();
+  }
+}
+router();
+
+window.addEventListener("click", (e) => {
+  if(e.target.tagName === "A") {
+    e.preventDefault(); 
+
+    const { href } = e.target;
+    const path = href.replace(window.location.origin, "");
+
+    history.pushState(null, null, path);
+    router();
+  }
+}) 
+
+window.addEventListener("popstate", e => router());
+
+// 링크이동
+function goLink(path) {
+  history.pushState(null, null, path);
+  router();
+}
+
+로그인
+const $loginForm = document.querySelector("#login-form");
+const $loginText = document.querySelector("#login-text");
+const $logout = document.querySelector("#logout");
+
+const login = (e) => {
+  e.preventDefault();
+  const username = $loginText.value;
+  localStorage.setItem("username", username);
+  console.log(localStorage.getItem("username"));
+  goLink('/');
+}
+
+const logout = (e) => {
+  e.preventDefault();
+  localStorage.removeItem("username");
+  console.log(localStorage.getItem("username"));
+  goLink('/login');
+}
+
+if ( $loginForm ) {
+  $loginForm.addEventListener("submit", login);
+}
+if ( $logout ) {
+  $logout.addEventListener("click", logout);
+}
