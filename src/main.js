@@ -5,13 +5,7 @@ const MainPage = () => `
         <h1 class="text-2xl font-bold">항해플러스</h1>
       </header>
 
-      <nav class="bg-white shadow-md p-2 sticky top-14">
-        <ul class="flex justify-around">
-          <li><a href="/" class="text-blue-600">홈</a></li>
-          <li><a href="/profile" class="text-gray-600">프로필</a></li>
-          <li><a href="#" id="logout" class="text-gray-600">로그아웃</a></li>
-        </ul>
-      </nav>
+      <div id="nav"></div>
 
       <main class="p-4">
         <div class="mb-4 bg-white rounded-lg shadow p-4">
@@ -132,7 +126,7 @@ const LoginPage = () => `
       <h1 class="text-2xl font-bold text-center text-blue-600 mb-8">항해플러스</h1>
       <form id="login-form">
         <div class="mb-4">
-          <input type="text" id="login-text" placeholder="사용자 이름" class="w-full p-2 border rounded">
+          <input type="text" id="username" placeholder="사용자 이름" class="w-full p-2 border rounded">
         </div>
         <div class="mb-6">
           <input type="password" placeholder="비밀번호" class="w-full p-2 border rounded">
@@ -158,13 +152,7 @@ const ProfilePage = () => `
           <h1 class="text-2xl font-bold">항해플러스</h1>
         </header>
 
-        <nav class="bg-white shadow-md p-2 sticky top-14">
-          <ul class="flex justify-around">
-            <li><a href="/" class="text-gray-600">홈</a></li>
-            <li><a href="/profile" class="text-blue-600">프로필</a></li>
-            <li><a href="#" class="text-gray-600">로그아웃</a></li>
-          </ul>
-        </nav>
+        <div id="nav"></div>
 
         <main class="p-4">
           <div class="bg-white p-8 rounded-lg shadow-md">
@@ -233,79 +221,131 @@ const ProfilePage = () => `
   </div>
 `;
 
-// document.body.innerHTML = `
-//   ${MainPage()}
-//   ${ProfilePage()}
-//   ${LoginPage()}
-//   ${ErrorPage()}
-// `;
+const loginNav = `
+  <nav class="bg-white shadow-md p-2 sticky top-14">
+    <ul class="flex justify-around">
+      <li><a href="/" class="text-gray-600">홈</a></li>
+      <li><a href="/profile" class="text-blue-600">프로필</a></li>
+      <li><a href="#" id="logout" class="text-gray-600">로그아웃</a></li>
+    </ul>
+  </nav>
+`;
+
+const logoutNav = `
+  <nav class="bg-white shadow-md p-2 sticky top-14">
+    <ul class="flex justify-around">
+      <li><a href="/" class="text-gray-600">홈</a></li>
+      <li><a href="/login" class="text-blue-600">로그인</a></li>
+    </ul>
+  </nav>
+`;
+
+// 초기 설정
+let loginState = "logout";
 
 // 라우트 설정
 function router() {
   const $body = document.querySelector("body");
   const { pathname } = location;
 
-  if(pathname === "/") {
-      $body.innerHTML = MainPage();
-      console.log("main")
-  }
-  else if(pathname === "/profile") {
+  if (pathname === "/") {
+    $body.innerHTML = MainPage();
+    if (loginState === "logout") {
+      document.querySelector("#nav").innerHTML = logoutNav;
+    }
+    if (loginState === "login") {
+      document.querySelector("#nav").innerHTML = loginNav;
+    }
+  } else if (pathname === "/profile") {
+    if (loginState === "login") {
       $body.innerHTML = ProfilePage();
-      console.log("profile")
-  }
-  else if(pathname === "/login") {
+      document.querySelector("#nav").innerHTML = loginNav;
+    }
+    if (loginState === "logout") {
       $body.innerHTML = LoginPage();
-      console.log("login")
-  }
-  else {
+      loginPage();
+    }
+  } else if (pathname === "/login") {
+    $body.innerHTML = LoginPage();
+    loginPage();
+  } else {
     $body.innerHTML = ErrorPage();
   }
 }
 router();
 
 window.addEventListener("click", (e) => {
-  if(e.target.tagName === "A") {
-    e.preventDefault(); 
+  const target = e.target;
+  if (target.tagName === "A") {
+    e.preventDefault();
+    const path = target.getAttribute("href");
 
-    const { href } = e.target;
-    const path = href.replace(window.location.origin, "");
-
-    history.pushState(null, null, path);
+    if (target.textContent === "로그아웃") {
+      localStorage.removeItem("user");
+      loginCheck();
+      history.pushState(null, null, "/login");
+    } else {
+      history.pushState(null, null, path);
+    }
     router();
   }
-}) 
+});
 
-window.addEventListener("popstate", e => router());
+window.addEventListener("popstate", () => {
+  router();
+});
 
 // 링크이동
-function goLink(path) {
+const goLink = (path) => {
   history.pushState(null, null, path);
   router();
-}
+};
 
-로그인
-const $loginForm = document.querySelector("#login-form");
-const $loginText = document.querySelector("#login-text");
-const $logout = document.querySelector("#logout");
+// 로그인
+const user = {
+  username: "testuser",
+  email: "",
+  bio: "",
+};
+localStorage.setItem("user", JSON.stringify(user));
 
-const login = (e) => {
-  e.preventDefault();
-  const username = $loginText.value;
-  localStorage.setItem("username", username);
-  console.log(localStorage.getItem("username"));
-  goLink('/');
-}
+const loginCheck = () => {
+  console.log(localStorage.getItem("user"));
+  if (localStorage.getItem("user") === null) {
+    console.log("logout");
+    loginState = "logout";
+  } else {
+    console.log("login");
+    loginState = "login";
+  }
+};
 
-const logout = (e) => {
-  e.preventDefault();
-  localStorage.removeItem("username");
-  console.log(localStorage.getItem("username"));
-  goLink('/login');
-}
+const loginPage = () => {
+  const $loginForm = document.querySelector("#login-form");
+  const $username = document.querySelector("#username");
 
-if ( $loginForm ) {
-  $loginForm.addEventListener("submit", login);
-}
-if ( $logout ) {
-  $logout.addEventListener("click", logout);
-}
+  const login = (username, email = "", bio = "") => {
+    const userData = { username, email, bio };
+    user.username = username;
+    user.email = email;
+    user.bio = bio;
+    localStorage.setItem("user", JSON.stringify(userData));
+    loginCheck();
+  };
+
+  const loginSubmit = (e) => {
+    e.preventDefault();
+    const username = $username.value;
+    if (username.trim() === "") {
+      alert("사용자 이름을 입력하세요.");
+      return;
+    }
+    if (username === "testuser") {
+      login(username, user.email, user.bio);
+      goLink("/profile");
+    } else {
+      alert("사용자 이름이 틀립니다.");
+    }
+  };
+  $loginForm.addEventListener("submit", (e) => loginSubmit(e));
+};
