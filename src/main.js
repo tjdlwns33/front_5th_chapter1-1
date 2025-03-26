@@ -246,47 +246,48 @@ let user = null;
 
 // nav 설정
 function updateNav() {
-  const navElement = document.querySelector("#nav"); // '#nav'를 선택
-  if (navElement) {
+  const $nav = document.querySelector("#nav"); // '#nav'를 선택
+  if ($nav) {
     // nav 요소가 존재하는 경우에만 업데이트
     if (loginState === "logout") {
-      navElement.innerHTML = logoutNav;
+      $nav.innerHTML = logoutNav;
     } else {
-      navElement.innerHTML = loginNav;
+      $nav.innerHTML = loginNav;
     }
   }
 }
 
 // 라우트 설정
 function router() {
+  const $root = document.querySelector("#root");
   const { pathname } = location;
   loginCheck();
 
   if (pathname === "/") {
-    document.body.innerHTML = MainPage();
+    $root.innerHTML = MainPage();
     updateNav();
   } else if (pathname === "/profile") {
     if (loginState === "login") {
-      document.body.innerHTML = ProfilePage();
+      $root.innerHTML = ProfilePage();
       updateNav();
       navActive("프로필");
       profilePage();
     }
     if (loginState === "logout") {
-      document.body.innerHTML = LoginPage();
+      $root.innerHTML = LoginPage();
       loginPage();
     }
   } else if (pathname === "/login") {
     if (loginState === "login") {
-      document.body.innerHTML = MainPage();
+      $root.innerHTML = MainPage();
       updateNav();
     }
     if (loginState === "logout") {
-      document.body.innerHTML = LoginPage();
+      $root.innerHTML = LoginPage();
       loginPage();
     }
   } else {
-    document.body.innerHTML = ErrorPage();
+    $root.innerHTML = ErrorPage();
   }
 }
 document.addEventListener("DOMContentLoaded", () => {
@@ -294,9 +295,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function navActive(target) {
-  const links = document.querySelectorAll("nav a");
+  const $navLinks = document.querySelectorAll("nav a");
 
-  links.forEach((item) => {
+  $navLinks.forEach((item) => {
     item.classList.remove("text-blue-600", "font-bold");
     item.classList.add("text-gray-600");
     if (
