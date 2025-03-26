@@ -224,8 +224,8 @@ const ProfilePage = () => `
 const loginNav = `
   <nav class="bg-white shadow-md p-2 sticky top-14">
     <ul class="flex justify-around">
-      <li><a href="/" class="text-gray-600">홈</a></li>
-      <li><a href="/profile" class="text-blue-600">프로필</a></li>
+      <li><a href="/" class="text-blue-600 font-bold">홈</a></li>
+      <li><a href="/profile" class="text-gray-600">프로필</a></li>
       <li><a href="#" id="logout" class="text-gray-600">로그아웃</a></li>
     </ul>
   </nav>
@@ -234,8 +234,8 @@ const loginNav = `
 const logoutNav = `
   <nav class="bg-white shadow-md p-2 sticky top-14">
     <ul class="flex justify-around">
-      <li><a href="/" class="text-gray-600">홈</a></li>
-      <li><a href="/login" class="text-blue-600">로그인</a></li>
+      <li><a href="/" class="text-blue-600 font-bold">홈</a></li>
+      <li><a href="/login" class="text-gray-600">로그인</a></li>
     </ul>
   </nav>
 `;
@@ -244,6 +244,7 @@ const logoutNav = `
 let loginState = "logout";
 let user = null;
 
+// nav 설정
 function updateNav() {
   const navElement = document.querySelector("#nav"); // '#nav'를 선택
   if (navElement) {
@@ -268,6 +269,7 @@ function router() {
     if (loginState === "login") {
       document.body.innerHTML = ProfilePage();
       updateNav();
+      navActive("프로필");
       profilePage();
     }
     if (loginState === "logout") {
@@ -291,25 +293,46 @@ document.addEventListener("DOMContentLoaded", () => {
   router();
 });
 
+function navActive(target) {
+  const links = document.querySelectorAll("nav a");
+
+  links.forEach((item) => {
+    item.classList.remove("text-blue-600", "font-bold");
+    item.classList.add("text-gray-600");
+    if (
+      target.textContent === item.textContent ||
+      target === item.textContent
+    ) {
+      item.classList.add("text-blue-600", "font-bold");
+      item.classList.remove("text-gray-600");
+    }
+  });
+}
+
+window.addEventListener("popstate", () => {
+  router();
+});
+
 window.addEventListener("click", (e) => {
   const target = e.target;
+
+  // nav a태그 클릭
   if (target.tagName === "A") {
     e.preventDefault();
     const path = target.getAttribute("href");
 
     if (target.textContent === "로그아웃") {
+      //로그아웃 버튼 클릭
       localStorage.removeItem("user");
       loginCheck();
       history.pushState(null, null, "/login");
     } else {
       history.pushState(null, null, path);
     }
-    router();
-  }
-});
 
-window.addEventListener("popstate", () => {
-  router();
+    router();
+    navActive(target);
+  }
 });
 
 // 링크이동
@@ -319,7 +342,6 @@ function goLink(path) {
 }
 
 // 로그인
-
 function loginCheck() {
   const storedUser = localStorage.getItem("user");
   console.log(storedUser);
