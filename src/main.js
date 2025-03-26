@@ -159,7 +159,7 @@ const ProfilePage = () => `
             <h2 class="text-2xl font-bold text-center text-blue-600 mb-8">
               내 프로필
             </h2>
-            <form>
+            <form id="profile-form">
               <div class="mb-4">
                 <label
                   for="username"
@@ -242,37 +242,54 @@ const logoutNav = `
 
 // 초기 설정
 let loginState = "logout";
+let user = null;
+
+function updateNav() {
+  const navElement = document.querySelector("#nav"); // '#nav'를 선택
+  if (navElement) {
+    // nav 요소가 존재하는 경우에만 업데이트
+    if (loginState === "logout") {
+      navElement.innerHTML = logoutNav;
+    } else {
+      navElement.innerHTML = loginNav;
+    }
+  }
+}
 
 // 라우트 설정
 function router() {
-  const $body = document.querySelector("body");
   const { pathname } = location;
+  loginCheck();
 
   if (pathname === "/") {
-    $body.innerHTML = MainPage();
-    if (loginState === "logout") {
-      document.querySelector("#nav").innerHTML = logoutNav;
-    }
-    if (loginState === "login") {
-      document.querySelector("#nav").innerHTML = loginNav;
-    }
+    document.body.innerHTML = MainPage();
+    updateNav();
   } else if (pathname === "/profile") {
     if (loginState === "login") {
-      $body.innerHTML = ProfilePage();
-      document.querySelector("#nav").innerHTML = loginNav;
+      document.body.innerHTML = ProfilePage();
+      updateNav();
+      profilePage();
     }
     if (loginState === "logout") {
-      $body.innerHTML = LoginPage();
+      document.body.innerHTML = LoginPage();
       loginPage();
     }
   } else if (pathname === "/login") {
-    $body.innerHTML = LoginPage();
-    loginPage();
+    if (loginState === "login") {
+      document.body.innerHTML = MainPage();
+      updateNav();
+    }
+    if (loginState === "logout") {
+      document.body.innerHTML = LoginPage();
+      loginPage();
+    }
   } else {
-    $body.innerHTML = ErrorPage();
+    document.body.innerHTML = ErrorPage();
   }
 }
-router();
+document.addEventListener("DOMContentLoaded", () => {
+  router();
+});
 
 window.addEventListener("click", (e) => {
   const target = e.target;
@@ -296,40 +313,35 @@ window.addEventListener("popstate", () => {
 });
 
 // 링크이동
-const goLink = (path) => {
+function goLink(path) {
   history.pushState(null, null, path);
   router();
-};
+}
 
 // 로그인
-const user = {
-  username: "testuser",
-  email: "",
-  bio: "",
-};
-localStorage.setItem("user", JSON.stringify(user));
 
-const loginCheck = () => {
-  console.log(localStorage.getItem("user"));
-  if (localStorage.getItem("user") === null) {
+function loginCheck() {
+  const storedUser = localStorage.getItem("user");
+  console.log(storedUser);
+  if (storedUser === null) {
     console.log("logout");
     loginState = "logout";
+    user = null;
   } else {
     console.log("login");
     loginState = "login";
+    user = JSON.parse(storedUser);
   }
-};
+}
 
-const loginPage = () => {
+// 로그인 페이지 전용
+function loginPage() {
   const $loginForm = document.querySelector("#login-form");
   const $username = document.querySelector("#username");
 
   const login = (username, email = "", bio = "") => {
-    const userData = { username, email, bio };
-    user.username = username;
-    user.email = email;
-    user.bio = bio;
-    localStorage.setItem("user", JSON.stringify(userData));
+    user = { username, email, bio };
+    localStorage.setItem("user", JSON.stringify(user));
     loginCheck();
   };
 
@@ -341,11 +353,40 @@ const loginPage = () => {
       return;
     }
     if (username === "testuser") {
-      login(username, user.email, user.bio);
+      login(username, "", "");
       goLink("/profile");
     } else {
       alert("사용자 이름이 틀립니다.");
     }
   };
   $loginForm.addEventListener("submit", (e) => loginSubmit(e));
-};
+}
+
+// 프로필 페이지 전용
+function profilePage() {
+  if (!user) {
+    goLink("/login");
+    return;
+  }
+
+  const $profileForm = document.querySelector("#profile-form");
+  const $username = document.querySelector("#username");
+  const $email = document.querySelector("#email");
+  const $bio = document.querySelector("#bio");
+
+  $username.value = user.username;
+  $email.value = user.email;
+  $bio.value = user.bio;
+
+  const profileSubmit = (e) => {
+    e.preventDefault();
+    const username = $username.value;
+    const email = $email.value;
+    const bio = $bio.value;
+    user.username = username;
+    user.email = email;
+    user.bio = bio;
+    localStorage.setItem("user", JSON.stringify(user));
+  };
+  $profileForm.addEventListener("submit", (e) => profileSubmit(e));
+}
