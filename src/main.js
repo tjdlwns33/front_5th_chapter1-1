@@ -294,7 +294,13 @@ function getRouteType() {
 // routing 처리(URL경로에 맞춰서 페이지 렌더링, 내부 호출 순서 변경하면 안됨)
 export function renderRoute() {
   const $root = document.querySelector("#root");
+  const isProduction = process.env.NODE_ENV === "production";
+  const base = isProduction ? "/front-5th-chapter1-1/" : "/";
+
   const { currentPath } = getRouteType(); // 현재 경로를 가져옴
+
+  //프로덕션 환경에서 경로 변경
+  isProduction ? currentPath.replace(base, "") : currentPath;
 
   // 로그인 상태 체크
   loginCheck();
