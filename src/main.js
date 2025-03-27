@@ -246,9 +246,8 @@ let user = null;
 
 // nav 설정
 function updateNav() {
-  const $nav = document.querySelector("#nav"); // '#nav'를 선택
+  const $nav = document.querySelector("#nav");
   if ($nav) {
-    // nav 요소가 존재하는 경우에만 업데이트
     if (loginState === "logout") {
       $nav.innerHTML = logoutNav;
     } else {
@@ -257,16 +256,32 @@ function updateNav() {
   }
 }
 
+let pathState = "history";
+let customPathName = location.pathname;
+
+export function setPathName(path, state) {
+  pathState = state;
+  if (pathState === "hash") {
+    customPathName = path.replace("#", "") || "#/";
+  } else {
+    customPathName = path;
+  }
+}
+
+function getPathName() {
+  return { customPathName, pathState };
+}
+
 // 라우트 설정
-function router() {
+export function router() {
   const $root = document.querySelector("#root");
-  const { pathname } = location;
+  const { customPathName } = getPathName();
   loginCheck();
 
-  if (pathname === "/") {
+  if (customPathName === "/") {
     $root.innerHTML = MainPage();
     updateNav();
-  } else if (pathname === "/profile") {
+  } else if (customPathName === "/profile") {
     if (loginState === "login") {
       $root.innerHTML = ProfilePage();
       updateNav();
@@ -277,7 +292,7 @@ function router() {
       $root.innerHTML = LoginPage();
       loginPage();
     }
-  } else if (pathname === "/login") {
+  } else if (customPathName === "/login") {
     if (loginState === "login") {
       $root.innerHTML = MainPage();
       updateNav();
@@ -311,6 +326,7 @@ function navActive(target) {
 }
 
 window.addEventListener("popstate", () => {
+  setPathName(location.pathname, "history");
   router();
 });
 
@@ -326,11 +342,22 @@ window.addEventListener("click", (e) => {
       //로그아웃 버튼 클릭
       localStorage.removeItem("user");
       loginCheck();
-      history.pushState(null, null, "/login");
-    } else {
-      history.pushState(null, null, path);
-    }
 
+      if (pathState === "hash") {
+        location.hash = "#/login";
+        setPathName("#/login", pathState);
+      } else {
+        history.pushState(null, null, "/login");
+        setPathName("/login", pathState);
+      }
+    } else {
+      if (pathState === "hash") {
+        location.hash = path.replace("/", "#/");
+      } else {
+        history.pushState(null, null, path);
+      }
+      setPathName(path, pathState);
+    }
     router();
     navActive(target);
   }
@@ -338,20 +365,22 @@ window.addEventListener("click", (e) => {
 
 // 링크이동
 function goLink(path) {
-  history.pushState(null, null, path);
+  if (pathState === "hash") {
+    location.hash = path.replace("/", "#/");
+  } else {
+    history.pushState(null, null, path);
+  }
+  setPathName(path, pathState);
   router();
 }
 
 // 로그인
 function loginCheck() {
   const storedUser = localStorage.getItem("user");
-  console.log(storedUser);
   if (storedUser === null) {
-    console.log("logout");
     loginState = "logout";
     user = null;
   } else {
-    console.log("login");
     loginState = "login";
     user = JSON.parse(storedUser);
   }
