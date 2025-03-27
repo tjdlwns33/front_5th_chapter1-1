@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage" : "https://tjdlwns33.github.io/front_5th_chapter1-1/",
+  "homepage": "https://tjdlwns33.github.io/front_5th_chapter1-1/",
   "scripts": {
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
@@ -47,5 +47,8 @@
     "vite": "^6.0.3",
     "vitest": "^2.1.8"
   },
-  "packageManager": "pnpm@latest"
+  "packageManager": "pnpm@latest",
+  "dependencies": {
+    "playwright": "^1.51.1"
+  }
 }
