@@ -1,5 +1,7 @@
 import { setRouteType, renderRoute } from "./main.js";
 
+// hash
+
 // route 타입을 hash로 설정
 setRouteType(location.hash, "hash");
 
