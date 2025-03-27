@@ -240,11 +240,13 @@ const logoutNav = `
   </nav>
 `;
 
-// 초기 설정
+// 초기 설정(기본값)
 let loginState = "logout";
 let user = null;
+let routeType = "history";
+let currentPath = location.pathname;
 
-// nav 설정
+// nav 설정(로그인/로그아웃 경우에 따라 nav를 다르게 표출)
 function updateNav() {
   const $nav = document.querySelector("#nav");
   if ($nav) {
@@ -256,32 +258,52 @@ function updateNav() {
   }
 }
 
-let pathState = "history";
-let customPathName = location.pathname;
+// nav 링크 클래스 설정
+function navActive(target) {
+  const $navLinks = document.querySelectorAll("nav a");
 
-export function setPathName(path, state) {
-  pathState = state;
-  if (pathState === "hash") {
-    customPathName = path.replace("#", "") || "#/";
+  $navLinks.forEach((item) => {
+    item.classList.remove("text-blue-600", "font-bold");
+    item.classList.add("text-gray-600");
+    if (
+      // 링크 클릭했을 경우/링크가 있는 페이지에 이동했을 경우
+      target.textContent === item.textContent ||
+      target === item.textContent
+    ) {
+      item.classList.add("text-blue-600", "font-bold");
+      item.classList.remove("text-gray-600");
+    }
+  });
+}
+
+// route 타입 설정(history/hash)
+export function setRouteType(path, state) {
+  routeType = state;
+  if (routeType === "hash") {
+    currentPath = path.replace("#", "") || "#/";
   } else {
-    customPathName = path;
+    currentPath = path;
   }
 }
 
-function getPathName() {
-  return { customPathName, pathState };
+// route 타입 출력(history/hash)
+function getRouteType() {
+  return { currentPath, routeType };
 }
 
-// 라우트 설정
-export function router() {
+// routing 처리(URL경로에 맞춰서 페이지 렌더링, 내부 호출 순서 변경하면 안됨)
+export function renderRoute() {
   const $root = document.querySelector("#root");
-  const { customPathName } = getPathName();
+  const { currentPath } = getRouteType(); // 현재 경로를 가져옴
+
+  // 로그인 상태 체크
   loginCheck();
 
-  if (customPathName === "/") {
+  // 현재 경로에 따른 페이지 설정
+  if (currentPath === "/") {
     $root.innerHTML = MainPage();
     updateNav();
-  } else if (customPathName === "/profile") {
+  } else if (currentPath === "/profile") {
     if (loginState === "login") {
       $root.innerHTML = ProfilePage();
       updateNav();
@@ -292,7 +314,7 @@ export function router() {
       $root.innerHTML = LoginPage();
       loginPage();
     }
-  } else if (customPathName === "/login") {
+  } else if (currentPath === "/login") {
     if (loginState === "login") {
       $root.innerHTML = MainPage();
       updateNav();
@@ -305,84 +327,73 @@ export function router() {
     $root.innerHTML = ErrorPage();
   }
 }
+
+// DOM이 준비된 후 routing 처리
 document.addEventListener("DOMContentLoaded", () => {
-  router();
+  renderRoute();
 });
 
-function navActive(target) {
-  const $navLinks = document.querySelectorAll("nav a");
-
-  $navLinks.forEach((item) => {
-    item.classList.remove("text-blue-600", "font-bold");
-    item.classList.add("text-gray-600");
-    if (
-      target.textContent === item.textContent ||
-      target === item.textContent
-    ) {
-      item.classList.add("text-blue-600", "font-bold");
-      item.classList.remove("text-gray-600");
-    }
-  });
-}
-
+// 브라우저의 history를 변경했을 때 route 타입 설정 후 routing 처리
 window.addEventListener("popstate", () => {
-  setPathName(location.pathname, "history");
-  router();
+  setRouteType(location.pathname, "history");
+  renderRoute();
 });
 
+// nav 링크 클릭 관련 처리
 window.addEventListener("click", (e) => {
   const target = e.target;
 
-  // nav a태그 클릭
+  // nav 링크 클릭
   if (target.tagName === "A") {
     e.preventDefault();
     const path = target.getAttribute("href");
 
     if (target.textContent === "로그아웃") {
-      //로그아웃 버튼 클릭
-      localStorage.removeItem("user");
-      loginCheck();
+      // 로그아웃인 경우
+      localStorage.removeItem("user"); // user 정보 삭제
+      loginCheck(); // 로그인 상태 체크
 
-      if (pathState === "hash") {
+      if (routeType === "hash") {
         location.hash = "#/login";
-        setPathName("#/login", pathState);
+        setRouteType("#/login", routeType);
       } else {
         history.pushState(null, null, "/login");
-        setPathName("/login", pathState);
+        setRouteType("/login", routeType);
       }
     } else {
-      if (pathState === "hash") {
+      // 홈/프로필인 경우
+      if (routeType === "hash") {
         location.hash = path.replace("/", "#/");
       } else {
         history.pushState(null, null, path);
       }
-      setPathName(path, pathState);
+      setRouteType(path, routeType);
     }
-    router();
-    navActive(target);
+    renderRoute(); // route 타입 설정 후 routing 처리
+    navActive(target); // routing 처리 후 nav 링크 클래스 설정
   }
 });
 
-// 링크이동
-function goLink(path) {
-  if (pathState === "hash") {
+// routing 경로 변경
+function changeRoute(path) {
+  if (routeType === "hash") {
     location.hash = path.replace("/", "#/");
   } else {
     history.pushState(null, null, path);
   }
-  setPathName(path, pathState);
-  router();
+  setRouteType(path, routeType);
+  renderRoute();
 }
 
-// 로그인
+// 로그인 상태 체크
 function loginCheck() {
-  const storedUser = localStorage.getItem("user");
+  const storedUser = localStorage.getItem("user"); // 로컬스토리지에 저장된 user 정보를 가져옴
   if (storedUser === null) {
     loginState = "logout";
     user = null;
   } else {
     loginState = "login";
-    user = JSON.parse(storedUser);
+    user = JSON.parse(storedUser); // user 정보(문자열)를 Javascript 객체로 변환해서 user 변수에 입력
   }
 }
 
@@ -391,22 +402,25 @@ function loginPage() {
   const $loginForm = document.querySelector("#login-form");
   const $username = document.querySelector("#username");
 
+  // user 정보를 가져와 user 변수에 입력하고 로컬스토리지에 user 정보 저장
   const login = (username, email = "", bio = "") => {
     user = { username, email, bio };
     localStorage.setItem("user", JSON.stringify(user));
-    loginCheck();
+    loginCheck(); // 로그인 상태 체크
   };
 
   const loginSubmit = (e) => {
     e.preventDefault();
     const username = $username.value;
     if (username.trim() === "") {
+      // 아무것도 입력하지 않았을 경우
       alert("사용자 이름을 입력하세요.");
       return;
     }
     if (username === "testuser") {
+      // 입력한 값이 testuser가 아닐 경우
       login(username, "", "");
-      goLink("/profile");
+      changeRoute("/profile");
     } else {
       alert("사용자 이름이 틀립니다.");
     }
@@ -417,7 +431,8 @@ function loginPage() {
 // 프로필 페이지 전용
 function profilePage() {
   if (!user) {
-    goLink("/login");
+    //user 변수에 저장된 정보가 없을 때
+    changeRoute("/login");
     return;
   }
 
@@ -438,7 +453,7 @@ function profilePage() {
     user.username = username;
     user.email = email;
     user.bio = bio;
-    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("user", JSON.stringify(user)); //입력한 정보로 user 정보 변경
   };
   $profileForm.addEventListener("submit", (e) => profileSubmit(e));
 }

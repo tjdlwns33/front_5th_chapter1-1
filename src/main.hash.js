@@ -1,12 +1,15 @@
-import { setPathName, router } from "./main.js";
+import { setRouteType, renderRoute } from "./main.js";
 
-setPathName(location.hash, "hash");
+// route 타입을 hash로 설정
+setRouteType(location.hash, "hash");
+
+// DOM이 준비된 후 routing 처리
 document.addEventListener("DOMContentLoaded", () => {
-  router();
+  renderRoute();
 });
 
+// hash를 변경했을 때 route 타입 설정 후 routing 처리
 window.addEventListener("hashchange", () => {
-  setPathName(location.hash, "hash");
-  router();
-  console.log("hashchange");
+  setRouteType(location.hash, "hash");
+  renderRoute();
 });
