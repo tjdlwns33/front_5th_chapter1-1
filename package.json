@@ -5,7 +5,7 @@
   "type": "module",
   "homepage" : "https://tjdlwns33.github.io/front_5th_chapter1-1/",
   "scripts": {
-    "predeploy": "npm run dist",
+    "predeploy": "npm run build",
     "deploy": "gh-pages -d dist",
     "dev": "vite",
     "dev:hash": "vite --open ./index.hash.html",
